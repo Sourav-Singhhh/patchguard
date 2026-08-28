@@ -9,7 +9,7 @@ export const rules: Rule[] = [
     severity: 'critical',
     description: 'Detects phrases attempting to override agent constraints or ignore safety rules.',
     detect: (line, lineNumber) => {
-      const pattern = /(ignore|disregard|override|bypass)\s+(previous|all|system|safety)\s+(instructions|prompt|rules|constraints)/i;
+      const pattern = /(ignore|disregard|override|bypass)\s+.*?\s*(instructions|prompt|rules|constraints)/i;
       if (pattern.test(line)) {
         return {
           id: `PI-001-${lineNumber}`,
@@ -34,7 +34,7 @@ export const rules: Rule[] = [
     severity: 'high',
     description: 'Detects directives instructing the agent to hide actions or execute silently without user consent.',
     detect: (line, lineNumber) => {
-      const pattern = /(do not tell the user|secretly execute|hide this action|without informing the user|run silently in the background)/i;
+      const pattern = /(do\s+not\s+tell\s+the\s+user|secretly\s+execute|hide\s+this\s+action|without\s+informing\s+the\s+user|run\s+silently\s+in\s+the\s+background)/i;
       if (pattern.test(line)) {
         return {
           id: `PI-002-${lineNumber}`,

@@ -5,8 +5,8 @@ import path from 'path';
 
 // Standalone CLI deterministic rule matcher
 const RULES = [
-  { id: 'PI-001', name: 'Prompt Injection Override', category: 'prompt_injection', severity: 'critical', pattern: /(ignore|disregard|override|bypass)\s+(previous|all|system|safety)\s+(instructions|prompt|rules|constraints)/i },
-  { id: 'PI-002', name: 'Stealth Execution Directive', category: 'prompt_injection', severity: 'high', pattern: /(do not tell the user|secretly execute|hide this action|without informing the user|run silently in the background)/i },
+  { id: 'PI-001', name: 'Prompt Injection Override', category: 'prompt_injection', severity: 'critical', pattern: /(ignore|disregard|override|bypass)\s+.*?\s*(instructions|prompt|rules|constraints)/i },
+  { id: 'PI-002', name: 'Stealth Execution Directive', category: 'prompt_injection', severity: 'high', pattern: /(do\s+not\s+tell\s+the\s+user|secretly\s+execute|hide\s+this\s+action|without\s+informing\s+the\s+user|run\s+silently\s+in\s+the\s+background)/i },
   { id: 'SEC-001', name: 'Sensitive File Access', category: 'credential_access', severity: 'critical', pattern: /(\.env|id_rsa|id_ed25519|\.aws\/credentials|\.config\/gh\/hosts\.yml|\.bash_history|\.zsh_history)/i },
   { id: 'SEC-002', name: 'API Key Exposure', category: 'credential_access', severity: 'high', pattern: /(SKILLPATCH_API_KEY|OPENAI_API_KEY|GITHUB_TOKEN|AWS_SECRET_ACCESS_KEY|cat\s+\$env:|echo\s+\$env:)/i },
   { id: 'DEST-001', name: 'Destructive Command', category: 'destructive_command', severity: 'critical', pattern: /(rm\s+-[rf]*\s+[\/*]|Remove-Item\s+.*-Recurse\s+-Force|mkfs|dd\s+if=|format\s+[c-z]:)/i },
