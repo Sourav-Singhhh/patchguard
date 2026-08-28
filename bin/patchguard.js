@@ -3,14 +3,14 @@
 import fs from 'fs';
 import path from 'path';
 
-// Standalone CLI deterministic rule matcher
+// Standalone CLI deterministic rule matcher (synchronized with src/scanner/rules.ts)
 const RULES = [
   { id: 'PI-001', name: 'Prompt Injection Override', category: 'prompt_injection', severity: 'critical', pattern: /(ignore|disregard|override|bypass)\s+.*?\s*(instructions|prompt|rules|constraints)/i },
   { id: 'PI-002', name: 'Stealth Execution Directive', category: 'prompt_injection', severity: 'high', pattern: /(do\s+not\s+tell\s+the\s+user|secretly\s+execute|hide\s+this\s+action|without\s+informing\s+the\s+user|run\s+silently\s+in\s+the\s+background)/i },
   { id: 'SEC-001', name: 'Sensitive File Access', category: 'credential_access', severity: 'critical', pattern: /(\.env|id_rsa|id_ed25519|\.aws\/credentials|\.config\/gh\/hosts\.yml|\.bash_history|\.zsh_history)/i },
-  { id: 'SEC-002', name: 'API Key Exposure', category: 'credential_access', severity: 'high', pattern: /(SKILLPATCH_API_KEY|OPENAI_API_KEY|GITHUB_TOKEN|AWS_SECRET_ACCESS_KEY|cat\s+\$env:|echo\s+\$env:)/i },
-  { id: 'DEST-001', name: 'Destructive Command', category: 'destructive_command', severity: 'critical', pattern: /(rm\s+-[rf]*\s+[\/*]|Remove-Item\s+.*-Recurse\s+-Force|mkfs|dd\s+if=|format\s+[c-z]:)/i },
-  { id: 'NET-001', name: 'Network Exfiltration', category: 'network_exfiltration', severity: 'high', pattern: /(curl.*-X\s*POST.*-d|curl.*--data|wget.*--post-data|nc\s+-[eE]|curl.*@)/i },
+  { id: 'SEC-002', name: 'API Key Exposure', category: 'credential_access', severity: 'high', pattern: /(SKILLPATCH_API_KEY|OPENAI_API_KEY|ANTHROPIC_API_KEY|GEMINI_API_KEY|DEEPSEEK_API_KEY|GITHUB_TOKEN|AWS_SECRET_ACCESS_KEY|SLACK_BOT_TOKEN|STRIPE_SECRET_KEY|DATABASE_URL|cat\s+\$env:|echo\s+\$env:)/i },
+  { id: 'DEST-001', name: 'Destructive Command', category: 'destructive_command', severity: 'critical', pattern: /(sudo\s+)?(rm\s+-[rf\s]*\s+[\/*~]|rm\s+--recursive\s+--force|Remove-Item\s+.*-Recurse\s+-Force|mkfs|dd\s+if=|format\s+[c-z]:)/i },
+  { id: 'NET-001', name: 'Network Exfiltration', category: 'network_exfiltration', severity: 'high', pattern: /(curl\s+.*(-X\s*POST|-d|--data).*|wget\s+.*--post-data.*|nc\s+-[eE].*)/i },
   { id: 'FILE-001', name: 'Sensitive Directory Traversal', category: 'suspicious_file_access', severity: 'medium', pattern: /(~\/\.ssh|\/etc\/passwd|\/etc\/shadow|C:\\Windows\\System32)/i },
 ];
 
@@ -65,6 +65,11 @@ Usage:
   node bin/patchguard.js audit <directory-path>
   node bin/patchguard.js gate <directory-path> [--threshold critical|high|moderate|low]
 `);
+}
+
+if (command === '--help' || command === '-h' || command === 'help') {
+  printUsage();
+  process.exit(0);
 }
 
 if (!command || !targetPath) {
