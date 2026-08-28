@@ -9,6 +9,9 @@ import { FindingsList } from './components/FindingsList';
 import { CodeView } from './components/CodeView';
 import { Summary } from './components/Summary';
 import { SanitizerModal } from './components/SanitizerModal';
+import { SkillPatchAuditor } from './components/SkillPatchAuditor';
+import { LocalBatchAuditor } from './components/LocalBatchAuditor';
+import { SecurityMatrix } from './components/SecurityMatrix';
 import { Shield, Lock } from 'lucide-react';
 
 export function App() {
@@ -109,7 +112,11 @@ export function App() {
       {/* Main Content Area */}
       <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 py-8">
         {!scanResult || !skillContent ? (
-          <DropZone onScanContent={handleScan} onSelectFixture={handleSelectFixture} />
+          <div className="space-y-8">
+            <DropZone onScanContent={handleScan} onSelectFixture={handleSelectFixture} />
+            <SkillPatchAuditor onScanContent={handleScan} />
+            <LocalBatchAuditor onSelectSkill={handleScan} />
+          </div>
         ) : (
           <div className="space-y-6 animate-fadeIn">
             <Header
@@ -120,6 +127,8 @@ export function App() {
             />
             
             <SeverityOverview counts={scanResult.counts} />
+
+            <SecurityMatrix result={scanResult} />
 
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
               <div className="lg:col-span-6 space-y-6">
