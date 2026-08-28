@@ -2,6 +2,7 @@ import { describe, it, expect, vi } from 'vitest';
 import { fetchSkillFromSkillPatch } from '../src/scanner/skillpatchApi';
 import { performLocalBatchAudit } from '../src/scanner/localBatchAudit';
 import { extractSkillFromTarGz } from '../src/scanner/tarExtractor';
+import { scanSkill } from '../src/scanner';
 
 describe('SkillPatch Registry & Local Directory Audit Engine', () => {
   it('should handle fetch errors gracefully for invalid slug', async () => {
@@ -44,5 +45,12 @@ describe('SkillPatch Registry & Local Directory Audit Engine', () => {
     expect(summary.safeCount).toBe(1);
     expect(summary.criticalCount).toBe(1);
     expect(summary.items.length).toBe(2);
+  });
+
+  it('should classify skills containing critical findings as CRITICAL RISK consistently', () => {
+    const criticalSkill = '```bash\nrm -rf /\n```';
+    const result = scanSkill(criticalSkill);
+    expect(result.findings.some(f => f.severity === 'critical')).toBe(true);
+    expect(result.riskLevel).toBe('CRITICAL RISK');
   });
 });

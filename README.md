@@ -90,7 +90,7 @@ PatchGuard includes an extensive test suite covering the parser, rules, auto-san
 npm test
 ```
 
-- **42 Vitest Tests**: 100% passing across 4 test files (`scanner.test.ts`, `sanitizer.test.ts`, `extendedAudit.test.ts`, `adversarial.test.ts`).
+- **43 Vitest Tests**: 100% passing across 4 test files (`scanner.test.ts`, `sanitizer.test.ts`, `extendedAudit.test.ts`, `adversarial.test.ts`).
 - **TypeScript Verification**: Zero type errors (`npx tsc -b`).
 - **Production Bundle**: Clean Vite compilation (`npm run build`).
 

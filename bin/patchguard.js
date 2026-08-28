@@ -35,18 +35,36 @@ function scanContent(raw) {
 
   const baseScore = 100;
   let deductions = 0;
+  let criticalCount = 0;
+  let highCount = 0;
+  let mediumCount = 0;
+
   findings.forEach(f => {
-    if (f.severity === 'critical') deductions += 35;
-    else if (f.severity === 'high') deductions += 20;
-    else if (f.severity === 'medium') deductions += 10;
+    if (f.severity === 'critical') {
+      deductions += 35;
+      criticalCount++;
+    } else if (f.severity === 'high') {
+      deductions += 20;
+      highCount++;
+    } else if (f.severity === 'medium') {
+      deductions += 10;
+      mediumCount++;
+    }
   });
 
   const score = Math.max(0, baseScore - deductions);
   let riskLevel = 'SAFE';
-  if (score < 40) riskLevel = 'CRITICAL RISK';
-  else if (score < 60) riskLevel = 'HIGH RISK';
-  else if (score < 80) riskLevel = 'MODERATE RISK';
-  else if (score < 100) riskLevel = 'LOW RISK';
+
+  // Semantic risk classification synchronized with src/scanner/scoring.ts
+  if (criticalCount > 0 || score < 40) {
+    riskLevel = 'CRITICAL RISK';
+  } else if (highCount > 0 || score < 60) {
+    riskLevel = 'HIGH RISK';
+  } else if (mediumCount > 0 || score < 80) {
+    riskLevel = 'MODERATE RISK';
+  } else if (findings.length > 0 || score < 100) {
+    riskLevel = 'LOW RISK';
+  }
 
   return { score, riskLevel, findings, totalLines: lines.length };
 }
