@@ -23,35 +23,47 @@ AI agent skills (such as those in the SkillPatch registry or custom `SKILL.md` w
 - **Auto-Sanitizer & Patch Generator**: Automatically comments out dangerous commands, wraps prompt injections, generates side-by-side diffs, rescans, and exports safe `SKILL.md` patches.
 
 ### 2. Live SkillPatch Registry Auditor
-- **Fetch & Audit Public Skills**: Enter any SkillPatch slug (e.g., `implement`, `research-deck`, `loop-me`).
-- **Safe Tarball Extraction**: Fetches public `.tar.gz` packages from `https://skillpatch.dev/install_skill/<slug>`, parses USTAR entries safely in memory using `fflate`, enforces size limits, and blocks archive path-traversal attempts (`../`).
+- **Fetch & Audit Public Skills**: Enter any valid SkillPatch slug (e.g., `implement`, `research-deck`, `loop-me`).
+- **Safe Tarball Extraction**: Fetches public `.tar.gz` packages from `https://skillpatch.dev/install_skill/<slug>` (routed via Same-Origin proxy in development/preview server), parses USTAR entries safely in memory using `fflate`, enforces size limits, and blocks archive path-traversal attempts (`../`).
 - **Zero Execution**: Downloaded package contents are treated strictly as untrusted text and never executed.
 
 ### 3. Local Skills Directory & CLI Security Gate
 - **Batch Directory Scanning**: Audits all installed skills inside `.latentcode/skills/` or local folders.
-- **CI/CD Security Gate**: Run `npx patchguard gate <directory>` in CI pipelines. Returns exit code `1` when critical/high threats exist, blocking unsafe builds automatically.
+- **CI/CD Security Gate**: Run `node bin/patchguard.js gate <directory>` or `npx patchguard gate <directory>` in CI pipelines. Returns exit code `1` when critical/high threats exist, blocking unsafe builds automatically.
 
 ---
 
-## 🚀 Quick Start & CLI Usage
+## 🚀 Quick Start & Setup
 
-### Web Application
+Execute all commands from the repository root containing `package.json`:
+
 ```bash
 # Clone repository
-git clone https://github.com/your-username/patchguard.git
+git clone https://github.com/Sourav-Singhhh/patchguard.git
 cd patchguard
 
 # Install dependencies
 npm install
 
-# Start development server
-npm run dev
+# Run unit tests
+npm test
+
+# Run TypeScript typecheck
+npx tsc -b
 
 # Production build
 npm run build
+
+# Start local development server
+npm run dev
 ```
 
-### Command Line Interface (CLI)
+*The Vite development server will start at `http://localhost:5173/`, enabling same-origin proxying for live SkillPatch registry fetches.*
+
+---
+
+## 💻 Command Line Interface (CLI)
+
 ```bash
 # Scan a single skill file
 node bin/patchguard.js scan path/to/SKILL.md
@@ -66,6 +78,8 @@ node bin/patchguard.js audit .latentcode/skills
 node bin/patchguard.js gate .latentcode/skills --threshold critical
 ```
 
+*(You can also use `npx patchguard <command>` when installed or linked).*
+
 ---
 
 ## 🔬 Test Suite & Quality Verification
@@ -73,7 +87,7 @@ node bin/patchguard.js gate .latentcode/skills --threshold critical
 PatchGuard includes an extensive test suite covering the parser, rules, auto-sanitizer, tarball extractor, SkillPatch network API, and adversarial evasion vectors using Vitest:
 
 ```bash
-npx vitest run
+npm test
 ```
 
 - **42 Vitest Tests**: 100% passing across 4 test files (`scanner.test.ts`, `sanitizer.test.ts`, `extendedAudit.test.ts`, `adversarial.test.ts`).
