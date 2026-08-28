@@ -63,6 +63,7 @@ Usage:
   node bin/patchguard.js scan <path-to-skill.md>
   node bin/patchguard.js sanitize <path-to-skill.md>
   node bin/patchguard.js audit <directory-path>
+  node bin/patchguard.js gate <directory-path> [--threshold critical|high|moderate|low]
 `);
 }
 
@@ -154,6 +155,71 @@ if (command === 'scan') {
 
   console.log(`\nDirectory Audit Summary: Scanned ${files.length} skills.`);
   process.exit(totalFindings > 0 ? 1 : 0);
+} else if (command === 'gate') {
+  let threshold = 'critical';
+  const thresholdIdx = args.indexOf('--threshold');
+  if (thresholdIdx !== -1 && args[thresholdIdx + 1]) {
+    threshold = args[thresholdIdx + 1].toLowerCase();
+  }
+
+  const files = fs.readdirSync(resolvedPath).filter(f => f.endsWith('.md') || f.endsWith('.skill'));
+  let safeCount = 0;
+  let warningCount = 0;
+  let criticalCount = 0;
+  let blocked = false;
+  const blockedReasons = [];
+
+  files.forEach(file => {
+    const filePath = path.join(resolvedPath, file);
+    const content = fs.readFileSync(filePath, 'utf-8');
+    const res = scanContent(content);
+
+    if (res.riskLevel === 'SAFE') {
+      safeCount++;
+    } else if (res.riskLevel === 'CRITICAL RISK') {
+      criticalCount++;
+    } else {
+      warningCount++;
+    }
+
+    // Evaluate threshold
+    const hasCritical = res.findings.some(f => f.severity === 'critical');
+    const hasHigh = res.findings.some(f => f.severity === 'high');
+    const hasMedium = res.findings.some(f => f.severity === 'medium');
+
+    let shouldBlock = false;
+    if (threshold === 'critical' && hasCritical) shouldBlock = true;
+    else if (threshold === 'high' && (hasCritical || hasHigh)) shouldBlock = true;
+    else if (threshold === 'moderate' && (hasCritical || hasHigh || hasMedium)) shouldBlock = true;
+    else if (threshold === 'low' && res.findings.length > 0) shouldBlock = true;
+
+    if (shouldBlock) {
+      blocked = true;
+      blockedReasons.push({ file, severity: res.findings[0]?.severity || 'threat', title: res.findings[0]?.title || 'Security Violation' });
+    }
+  });
+
+  console.log(`\nPATCHGUARD SECURITY GATE`);
+  console.log(`────────────────────────────────`);
+  console.log(`Skills scanned: ${files.length}`);
+  console.log(`Safe:           ${safeCount}`);
+  console.log(`Warnings:       ${warningCount}`);
+  console.log(`Critical:       ${criticalCount}\n`);
+
+  if (blocked) {
+    console.log(`Security Gate: BLOCKED`);
+    console.log(`Threshold:     ${threshold.toUpperCase()}`);
+    console.log(`\nReason:`);
+    blockedReasons.forEach(r => {
+      console.log(`  ${r.file}\n  └─ [${r.severity.toUpperCase()}]: ${r.title}`);
+    });
+    console.log(`\nExit code: 1\n`);
+    process.exit(1);
+  } else {
+    console.log(`Security Gate: PASSED`);
+    console.log(`Exit code: 0\n`);
+    process.exit(0);
+  }
 } else {
   printUsage();
   process.exit(1);

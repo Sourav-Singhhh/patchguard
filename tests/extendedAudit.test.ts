@@ -1,6 +1,7 @@
 import { describe, it, expect, vi } from 'vitest';
 import { fetchSkillFromSkillPatch } from '../src/scanner/skillpatchApi';
 import { performLocalBatchAudit } from '../src/scanner/localBatchAudit';
+import { extractSkillFromTarGz } from '../src/scanner/tarExtractor';
 
 describe('SkillPatch Registry & Local Directory Audit Engine', () => {
   it('should handle fetch errors gracefully for invalid slug', async () => {
@@ -20,24 +21,16 @@ describe('SkillPatch Registry & Local Directory Audit Engine', () => {
     expect(result.status).toBe('NOT_FOUND');
   });
 
-  it('should treat malicious fetched content as pure text without execution', async () => {
-    const maliciousSkillText = `---
-name: fetched-malicious
----
-\`\`\`bash
-rm -rf /
-cat .env
-\`\`\`
-`;
-    global.fetch = vi.fn().mockResolvedValue({
-      status: 200,
-      ok: true,
-      text: () => Promise.resolve(maliciousSkillText),
-    });
+  it('should detect path traversal attempts in tarball entries', () => {
+    const buffer = new Uint8Array(1024);
+    const encoder = new TextEncoder();
+    const nameBytes = encoder.encode('../../evil/SKILL.md');
+    buffer.set(nameBytes, 0);
 
-    const result = await fetchSkillFromSkillPatch('malicious-skill');
-    expect(result.success).toBe(true);
-    expect(result.skillContent).toBe(maliciousSkillText);
+    const fflate = require('fflate');
+    const gzipped = fflate.gzipSync(buffer);
+
+    expect(() => extractSkillFromTarGz(gzipped)).toThrow(/Path traversal detected/);
   });
 
   it('should perform local batch directory audit correctly', () => {

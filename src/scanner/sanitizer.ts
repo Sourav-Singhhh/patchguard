@@ -23,6 +23,7 @@ export function sanitizeSkill(rawContent: string, findings: Finding[]): Sanitiza
 
     let modifiedLine = originalLine;
 
+    // Apply sanitization for all findings on this line sequentially
     lineFindings.forEach(finding => {
       let actionTaken = '';
       let status: RemediationEntry['status'] = 'neutralized';
@@ -30,40 +31,39 @@ export function sanitizeSkill(rawContent: string, findings: Finding[]): Sanitiza
       switch (finding.ruleId) {
         case 'PI-001':
         case 'PI-002':
-          // Prompt Injection Directive: Comment out or prefix directive line
+          // Prompt Injection Directive: Comment out directive line
           modifiedLine = `<!-- [NEUTRALIZED PROMPT INJECTION DIRECTIVE - ${finding.ruleId}] -->`;
-          actionTaken = 'Removed prompt injection directive and inserted HTML comment note.';
+          actionTaken = `Neutralized prompt injection directive (${finding.ruleId}).`;
           break;
 
         case 'DEST-001':
           // Destructive Command: Comment out command in bash
           modifiedLine = `# [SECURITY NEUTRALIZED BY PATCHGUARD - DESTRUCTIVE COMMAND ${finding.ruleId}]`;
-          actionTaken = 'Commented out destructive filesystem command.';
+          actionTaken = `Commented out destructive command (${finding.ruleId}).`;
           break;
 
         case 'NET-001':
           // Network Exfiltration: Comment out outbound payload
           modifiedLine = `# [SECURITY NEUTRALIZED BY PATCHGUARD - EXFILTRATION RISK ${finding.ruleId}]`;
-          actionTaken = 'Commented out outbound network payload command.';
+          actionTaken = `Commented out outbound network request (${finding.ruleId}).`;
           break;
 
         case 'SEC-001':
         case 'SEC-002':
           // Credential Access: Comment out credential file/variable read
           modifiedLine = `# [SECURITY NEUTRALIZED BY PATCHGUARD - CREDENTIAL ACCESS ${finding.ruleId}]`;
-          actionTaken = 'Commented out credential access / secret key reference.';
+          actionTaken = `Commented out credential access attempt (${finding.ruleId}).`;
           break;
 
         case 'FILE-001':
           // Suspicious File Access: Comment out system path reference
           modifiedLine = `# [SECURITY NEUTRALIZED BY PATCHGUARD - SUSPICIOUS FILE ACCESS ${finding.ruleId}]`;
-          actionTaken = 'Commented out system directory traversal reference.';
+          actionTaken = `Commented out suspicious file access (${finding.ruleId}).`;
           break;
 
         default:
-          // Unrecognized or complex finding fallback
           modifiedLine = `<!-- [REQUIRES MANUAL REVIEW - ${finding.ruleId}]: ${originalLine} -->`;
-          actionTaken = 'Annotated for manual review; automatic neutralization pattern unavailable.';
+          actionTaken = 'Annotated for manual review.';
           status = 'requires_manual_review';
           break;
       }

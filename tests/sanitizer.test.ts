@@ -41,12 +41,17 @@ describe('PatchGuard Auto-Sanitizer Module', () => {
     expect(sanitization.sanitizedContent).toContain('# [SECURITY NEUTRALIZED BY PATCHGUARD - EXFILTRATION RISK');
   });
 
-  it('should sanitize mixed critical fixture completely', () => {
+  it('should sanitize mixed critical fixture completely and neutralize all 5 findings', () => {
     const raw = fixtures[5].content; // mixed-critical-skill
     const scan = scanSkill(raw);
-    expect(scan.findings.length).toBeGreaterThanOrEqual(3);
+    
+    // mixed-critical-skill has 5 findings: PI-001, PI-002 on line 8, SEC-001 on line 11, DEST-001 on line 12, NET-001 on line 13
+    expect(scan.findings.length).toBe(5);
 
     const sanitization = sanitizeSkill(raw, scan.findings);
+    expect(sanitization.remediations.length).toBe(5);
+    expect(sanitization.totalNeutralized).toBe(5);
+    expect(sanitization.rescanResult.findings.length).toBe(0);
     expect(sanitization.rescanResult.score).toBe(100);
     expect(sanitization.rescanResult.riskLevel).toBe('SAFE');
   });

@@ -1,9 +1,11 @@
+import { extractSkillFromTarGz } from './tarExtractor';
+
 export interface SkillPatchFetchResult {
   success: boolean;
   slug: string;
   skillContent?: string;
   error?: string;
-  status: 'SUCCESS' | 'NOT_FOUND' | 'NETWORK_ERROR' | 'INVALID_RESPONSE' | 'OVERSIZED';
+  status: 'SUCCESS' | 'NOT_FOUND' | 'NETWORK_ERROR' | 'INVALID_RESPONSE' | 'OVERSIZED' | 'MALFORMED_ARCHIVE';
 }
 
 const MAX_SKILL_SIZE_BYTES = 2 * 1024 * 1024; // 2MB safety limit
@@ -30,7 +32,7 @@ export async function fetchSkillFromSkillPatch(slug: string): Promise<SkillPatch
     const response = await fetch(url, {
       signal: controller.signal,
       headers: {
-        'Accept': 'text/plain, text/markdown, application/octet-stream, */*',
+        'Accept': 'application/gzip, application/octet-stream, text/plain, */*',
       },
     });
 
@@ -54,34 +56,47 @@ export async function fetchSkillFromSkillPatch(slug: string): Promise<SkillPatch
       };
     }
 
-    const text = await response.text();
+    const arrayBuffer = await response.arrayBuffer();
+    const uint8Array = new Uint8Array(arrayBuffer);
 
-    if (text.length > MAX_SKILL_SIZE_BYTES) {
+    if (uint8Array.byteLength > MAX_SKILL_SIZE_BYTES) {
       return {
         success: false,
         slug: cleanSlug,
         status: 'OVERSIZED',
-        error: `Skill content exceeds safety size limit (2MB max).`,
+        error: `Skill package exceeds safety size limit (2MB max).`,
       };
     }
 
-    // Check if response is raw markdown / YAML skill text
-    if (text.includes('---') || text.includes('# ') || text.includes('name:')) {
+    // Attempt GZIP + Tar extraction of SKILL.md
+    try {
+      const extracted = extractSkillFromTarGz(uint8Array);
       return {
         success: true,
         slug: cleanSlug,
-        skillContent: text,
+        skillContent: extracted.content,
         status: 'SUCCESS',
       };
-    }
+    } catch (archiveErr: unknown) {
+      // Fallback: Check if response was plain text markdown rather than a tarball
+      const text = new TextDecoder().decode(uint8Array);
+      if (text.includes('---') || text.includes('# ') || text.includes('name:')) {
+        return {
+          success: true,
+          slug: cleanSlug,
+          skillContent: text,
+          status: 'SUCCESS',
+        };
+      }
 
-    // Fallback: If returned content is gzipped tarball or binary text from tar stream
-    return {
-      success: true,
-      slug: cleanSlug,
-      skillContent: text,
-      status: 'SUCCESS',
-    };
+      const msg = archiveErr instanceof Error ? archiveErr.message : 'Invalid archive structure';
+      return {
+        success: false,
+        slug: cleanSlug,
+        status: 'MALFORMED_ARCHIVE',
+        error: `SkillPatch package was reached, but archive extraction failed: ${msg}`,
+      };
+    }
 
   } catch (err: unknown) {
     const errorMessage = err instanceof Error ? err.message : 'Unknown network failure';
