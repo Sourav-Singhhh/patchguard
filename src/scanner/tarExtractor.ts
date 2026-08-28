@@ -5,6 +5,8 @@ export interface ExtractedSkill {
   content: string;
 }
 
+const MAX_DECOMPRESSED_SIZE_BYTES = 5 * 1024 * 1024; // 5MB safety ceiling for decompressed tar
+
 export function extractSkillFromTarGz(buffer: Uint8Array): ExtractedSkill {
   // Decompress GZIP
   let decompressed: Uint8Array;
@@ -15,8 +17,14 @@ export function extractSkillFromTarGz(buffer: Uint8Array): ExtractedSkill {
     throw new Error(`Failed to decompress GZIP package: ${msg}`);
   }
 
+  if (decompressed.length > MAX_DECOMPRESSED_SIZE_BYTES) {
+    throw new Error(`Security Violation: Decompressed archive exceeds size ceiling (5MB max).`);
+  }
+
   // Parse USTAR tar entries (512-byte blocks)
   let offset = 0;
+  const entries: { fileName: string; content: string }[] = [];
+
   while (offset + 512 <= decompressed.length) {
     const header = decompressed.subarray(offset, offset + 512);
     
@@ -56,15 +64,10 @@ export function extractSkillFromTarGz(buffer: Uint8Array): ExtractedSkill {
       throw new Error(`Malformed archive: Entry '${fileName}' extends past archive boundaries.`);
     }
 
-    // Check if this file is SKILL.md (e.g. "implement/SKILL.md" or "SKILL.md")
-    if (fileName.endsWith('SKILL.md') || fileName.endsWith('.md')) {
+    if (fileName.endsWith('.md')) {
       const fileContentBytes = decompressed.subarray(dataStart, dataEnd);
       const content = new TextDecoder('utf-8').decode(fileContentBytes);
-
-      return {
-        fileName,
-        content,
-      };
+      entries.push({ fileName, content });
     }
 
     // Jump to next 512-byte block boundary
@@ -72,5 +75,16 @@ export function extractSkillFromTarGz(buffer: Uint8Array): ExtractedSkill {
     offset = dataEnd + padding;
   }
 
-  throw new Error("SkillPackage reached, but archive did not contain a valid SKILL.md file.");
+  if (entries.length === 0) {
+    throw new Error("SkillPackage reached, but archive did not contain a valid SKILL.md file.");
+  }
+
+  // Priority 1: Exact or nested SKILL.md
+  const skillMdEntry = entries.find(e => e.fileName.endsWith('SKILL.md') || e.fileName.endsWith('skill.md'));
+  if (skillMdEntry) {
+    return skillMdEntry;
+  }
+
+  // Priority 2: Fallback to first .md file if no SKILL.md exists
+  return entries[0];
 }

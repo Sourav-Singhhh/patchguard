@@ -28,10 +28,13 @@ export function sanitizeSkill(rawContent: string, findings: Finding[]): Sanitiza
       let actionTaken = '';
       let status: RemediationEntry['status'] = 'neutralized';
 
+      // Ensure content inside modified line cannot break HTML comment tags prematurely
+      const safeOriginalLine = originalLine.replace(/-->/g, '-- >');
+
       switch (finding.ruleId) {
         case 'PI-001':
         case 'PI-002':
-          // Prompt Injection Directive: Comment out directive line
+          // Prompt Injection Directive: Replace directive line with HTML comment note
           modifiedLine = `<!-- [NEUTRALIZED PROMPT INJECTION DIRECTIVE - ${finding.ruleId}] -->`;
           actionTaken = `Neutralized prompt injection directive (${finding.ruleId}).`;
           break;
@@ -62,7 +65,7 @@ export function sanitizeSkill(rawContent: string, findings: Finding[]): Sanitiza
           break;
 
         default:
-          modifiedLine = `<!-- [REQUIRES MANUAL REVIEW - ${finding.ruleId}]: ${originalLine} -->`;
+          modifiedLine = `<!-- [REQUIRES MANUAL REVIEW - ${finding.ruleId}]: ${safeOriginalLine} -->`;
           actionTaken = 'Annotated for manual review.';
           status = 'requires_manual_review';
           break;

@@ -81,12 +81,12 @@ export const rules: Rule[] = [
   },
   {
     id: 'SEC-002',
-    name: 'API Key / Token Keyword Exposure',
+    name: 'API Key / Secret Token Exposure',
     category: 'credential_access',
     severity: 'high',
     description: 'Detects keywords indicating reading or printing environment secrets or API keys.',
     detect: (line, lineNumber) => {
-      const pattern = /(SKILLPATCH_API_KEY|OPENAI_API_KEY|GITHUB_TOKEN|AWS_SECRET_ACCESS_KEY|cat\s+\$env:|echo\s+\$env:)/i;
+      const pattern = /(SKILLPATCH_API_KEY|OPENAI_API_KEY|ANTHROPIC_API_KEY|GEMINI_API_KEY|DEEPSEEK_API_KEY|GITHUB_TOKEN|AWS_SECRET_ACCESS_KEY|SLACK_BOT_TOKEN|STRIPE_SECRET_KEY|DATABASE_URL|cat\s+\$env:|echo\s+\$env:)/i;
       if (pattern.test(line)) {
         return {
           id: `SEC-002-${lineNumber}`,
@@ -113,7 +113,7 @@ export const rules: Rule[] = [
     severity: 'critical',
     description: 'Detects highly destructive command options like recursive force deletes or drive formatting.',
     detect: (line, lineNumber) => {
-      const pattern = /(rm\s+-[rf]*\s+[\/*]|Remove-Item\s+.*-Recurse\s+-Force|mkfs|dd\s+if=|format\s+[c-z]:)/i;
+      const pattern = /(sudo\s+)?(rm\s+-[rf\s]*\s+[\/*~]|rm\s+--recursive\s+--force|Remove-Item\s+.*-Recurse\s+-Force|mkfs|dd\s+if=|format\s+[c-z]:)/i;
       if (pattern.test(line)) {
         return {
           id: `DEST-001-${lineNumber}`,
@@ -140,7 +140,7 @@ export const rules: Rule[] = [
     severity: 'high',
     description: 'Detects HTTP POST / upload commands sending local files or environment variables outward.',
     detect: (line, lineNumber) => {
-      const pattern = /(curl.*-X\s*POST.*-d|curl.*--data|wget.*--post-data|nc\s+-[eE]|curl.*@)/i;
+      const pattern = /(curl\s+.*(-X\s*POST|-d|--data).*|wget\s+.*--post-data.*|nc\s+-[eE].*)/i;
       if (pattern.test(line)) {
         return {
           id: `NET-001-${lineNumber}`,

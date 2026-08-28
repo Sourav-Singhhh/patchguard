@@ -1,6 +1,6 @@
-import React from 'react';
+import React, { useState } from 'react';
 import type { SanitizationResult } from '../scanner/types';
-import { X, ShieldCheck, CheckCircle2, Download, FileCode } from 'lucide-react';
+import { X, ShieldCheck, CheckCircle2, Download, FileCode, Copy, Check } from 'lucide-react';
 
 interface SanitizerModalProps {
   originalContent: string;
@@ -15,6 +15,7 @@ export const SanitizerModal: React.FC<SanitizerModalProps> = ({
   fileName,
   onClose,
 }) => {
+  const [copied, setCopied] = useState(false);
   const originalLines = originalContent.split(/\r?\n/);
   const sanitizedLines = sanitizationResult.sanitizedContent.split(/\r?\n/);
 
@@ -30,6 +31,16 @@ export const SanitizerModal: React.FC<SanitizerModalProps> = ({
     document.body.appendChild(downloadAnchor);
     downloadAnchor.click();
     downloadAnchor.remove();
+  };
+
+  const handleCopyClipboard = async () => {
+    try {
+      await navigator.clipboard.writeText(sanitizationResult.sanitizedContent);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch {
+      // Fallback
+    }
   };
 
   return (
@@ -49,7 +60,7 @@ export const SanitizerModal: React.FC<SanitizerModalProps> = ({
           </div>
           <button
             onClick={onClose}
-            className="p-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white transition-colors"
+            className="p-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white transition-colors cursor-pointer"
           >
             <X className="w-5 h-5" />
           </button>
@@ -73,13 +84,22 @@ export const SanitizerModal: React.FC<SanitizerModalProps> = ({
               </div>
             </div>
 
-            <button
-              onClick={handleDownloadSanitized}
-              className="w-full sm:w-auto flex items-center justify-center gap-2 px-5 py-3 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-sm font-bold shadow-lg shadow-emerald-600/20 transition-all"
-            >
-              <Download className="w-4 h-4" />
-              Download Safe SKILL.md
-            </button>
+            <div className="flex items-center gap-3 w-full sm:w-auto">
+              <button
+                onClick={handleCopyClipboard}
+                className="flex-1 sm:flex-initial flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 text-sm font-semibold border border-slate-700 transition-all cursor-pointer"
+              >
+                {copied ? <Check className="w-4 h-4 text-emerald-400" /> : <Copy className="w-4 h-4 text-blue-400" />}
+                {copied ? 'Copied!' : 'Copy Safe SKILL.md'}
+              </button>
+              <button
+                onClick={handleDownloadSanitized}
+                className="flex-1 sm:flex-initial flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-sm font-bold shadow-lg shadow-emerald-600/20 transition-all cursor-pointer"
+              >
+                <Download className="w-4 h-4" />
+                Download Safe SKILL.md
+              </button>
+            </div>
           </div>
 
           {/* Remediation Audit Log */}

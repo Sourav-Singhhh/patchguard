@@ -21,6 +21,25 @@ export const DropZone: React.FC<DropZoneProps> = ({ onScanContent, onSelectFixtu
     }
   };
 
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+  };
+
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    const file = e.dataTransfer.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        const text = event.target?.result as string;
+        onScanContent(text, file.name);
+      };
+      reader.readAsText(file);
+    }
+  };
+
   return (
     <div className="space-y-10 max-w-5xl mx-auto py-6">
       {/* Hero Title */}
@@ -38,7 +57,11 @@ export const DropZone: React.FC<DropZoneProps> = ({ onScanContent, onSelectFixtu
       </div>
 
       {/* Main Drag & Drop Zone */}
-      <div className="relative group border-2 border-dashed border-slate-800 hover:border-blue-500/60 rounded-2xl p-8 sm:p-12 text-center bg-slate-900/40 hover:bg-slate-900/80 backdrop-blur-xl transition-all cursor-pointer shadow-2xl">
+      <div
+        onDragOver={handleDragOver}
+        onDrop={handleDrop}
+        className="relative group border-2 border-dashed border-slate-800 hover:border-blue-500/60 rounded-2xl p-8 sm:p-12 text-center bg-slate-900/40 hover:bg-slate-900/80 backdrop-blur-xl transition-all cursor-pointer shadow-2xl"
+      >
         <input
           type="file"
           accept=".md,.txt,.skill"
@@ -75,7 +98,7 @@ export const DropZone: React.FC<DropZoneProps> = ({ onScanContent, onSelectFixtu
             <button
               key={fix.id}
               onClick={() => onSelectFixture(fix)}
-              className="flex flex-col text-left p-5 rounded-xl bg-slate-900/60 hover:bg-slate-800/80 border border-slate-800/80 hover:border-slate-700/80 transition-all group shadow-md hover:shadow-xl relative overflow-hidden"
+              className="flex flex-col text-left p-5 rounded-xl bg-slate-900/60 hover:bg-slate-800/80 border border-slate-800/80 hover:border-slate-700/80 transition-all group shadow-md hover:shadow-xl relative overflow-hidden cursor-pointer"
             >
               <div className="flex items-center justify-between w-full mb-2">
                 <span className="text-sm font-bold text-slate-200 group-hover:text-blue-400 transition-colors">
