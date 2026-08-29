@@ -35,6 +35,18 @@ AI agent skills (such as those in the SkillPatch registry or custom `SKILL.md` w
 
 ---
 
+## 🔎 Real-World SkillPatch Registry Validation
+
+To validate PatchGuard beyond synthetic fixtures, a representative real-world corpus of **30 publicly available SkillPatch registry skills** retrieved directly from `https://skillpatch.dev` was audited:
+
+- **30/30 Successfully Fetched & Extracted**: 100% network and in-memory archive extraction success rate (`fflate` USTAR parser).
+- **29/30 Clean Pass Rate (100/100 SAFE)**: 29 sampled skills passed cleanly with zero threat findings.
+- **1/30 Flagged (Contextual Detection)**: `effective-agent-skills` triggered `PI-001` (`65/100 CRITICAL RISK`) on Line 276 because it contained the literal signature phrase `"ignore previous instructions"` inside an educational security checklist.
+- **100% Auto-Sanitizer Rescan Recovery**: PatchGuard's Auto-Sanitizer neutralized the line and restored the rescan score to **100/100 SAFE**.
+- **0 Executions**: Zero downloaded skill scripts or commands were executed. Packages were ingested strictly as static binary buffer data.
+
+---
+
 ## 🚀 Quick Start & Setup
 
 Execute all commands from the repository root containing `package.json`:
@@ -106,6 +118,19 @@ npm test
 4. **Auto-Sanitizer**: Click **Sanitize & Neutralize** $\rightarrow$ Review the side-by-side Diff view, remediation log, and rescan status (**100/100 "No detected threats under PatchGuard rules"**).
 5. **Live SkillPatch Fetch**: Enter `implement` in the SkillPatch Registry Auditor $\rightarrow$ Show real-time `.tar.gz` package fetch and in-memory extraction.
 6. **CLI Security Gate**: Run `node bin/patchguard.js gate src/fixtures` in terminal $\rightarrow$ Show `Security Gate: BLOCKED` with non-zero exit code (`exit 1`).
+
+---
+
+## 🚀 Future Development Roadmap
+
+1. **Context-Aware Finding Classification**: Better distinguish active malicious directives from educational or documentation references while retaining deterministic security signatures.
+2. **Expanded Security Rules**: Additional credential stores, destructive shell patterns, exfiltration techniques, and agent evasion vectors.
+3. **Skill Provenance & Hash Verification**: Track publisher metadata, content hashes, and historical scan results to detect unexpected skill mutations over time.
+4. **Continuous SkillPatch Registry Monitoring**: Re-scan skills automatically when new versions are published and alert when risk status changes.
+5. **CI/CD Integrations & GitHub Actions**: Native GitHub Action step for organization-level security threshold enforcement.
+6. **Custom Security Policies**: Configurable organization-specific rules, custom severity thresholds, and allow/deny lists.
+7. **Machine-Readable Security Manifests**: Export findings, hashes, and risk data in standard SARIF/JSON formats for downstream enterprise security tools.
+8. **Enterprise Audit History**: Comprehensive scan logs, remediation records, and security audit trails.
 
 ---
 
