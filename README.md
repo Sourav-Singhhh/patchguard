@@ -3,6 +3,8 @@
 
 PatchGuard is a static analysis security harness and CI/CD gate designed to audit third-party AI agent skills (`SKILL.md` files and embedded code blocks) **before** an agent executes them.
 
+*Note for Hackathon Judges: PatchGuard uses the SkillPatch **`implement`** skill (`.latentcode/skills/implement`) for TDD-guided build execution, and provides a built-in Live Registry Auditor to inspect public SkillPatch skills.*
+
 ---
 
 ## 🎯 The Problem
